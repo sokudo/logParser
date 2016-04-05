@@ -86,3 +86,6 @@ class SQLListener(SQLiteListener.SQLiteListener):
 
   def exitUpdate_stmt(self, ctx):
     self.result['sqlOp'] = 'update'
+
+  def exitError(self, ctx):
+    self.result['error'] = self.result.get('error', 0) + 1
