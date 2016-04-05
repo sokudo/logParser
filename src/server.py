@@ -1,3 +1,4 @@
+import getopt
 import itertools
 import json
 import sys
@@ -11,12 +12,12 @@ from src import resultListener
 
 
 def processMessages(data):
-  """Parses and cleans log lines.
+  """Parses log lines and cleans up some fields.
 
   Args:
      data: str, A buffer with log lines to parse.
   Returns:
-    list<dict>, A list of cleaned log messages as dicts.
+    list<dict>, A list of parsed log messages as dicts.
   """
   input = InputStream(data)
   lexer = logMessageLexer.logMessageLexer(input)
@@ -26,27 +27,45 @@ def processMessages(data):
 
   walker = ParseTreeWalker()
   results = []
-  walker.walk(resultListener.ResultListener(results), tree)
+  walker.walk(resultListener.LogMessagesListener(results), tree)
   return results
 
 
 def processSql(sql):
+  """Parses SQL statements and extracts table, columns, SQL command kind.
+
+  We parse SQL but report kind only as SELECT, INSERT, UPDATE, DELETE or OTHER.
+
+  Args:
+     data: str, A buffer with SQL statements to parse.
+  Returns:
+    list<dict>, A list of dicts with table, columns, sqlOp fields.
+  """
   input = InputStream(sql)
   lexer = SQLiteLexer.SQLiteLexer(input)
   stream = CommonTokenStream(lexer)
   parser = SQLiteParser.SQLiteParser(stream)
   results = []
-  # Commented out: SQL parser is exceedingly slow.
-  # tree = parser.parse()
-  # walker = ParseTreeWalker()
-  # walker.walk(resultListener.SQLListener(results), tree)
+  # Standard SQL parser is exceedingly slow.
+  tree = parser.parse()
+  walker = ParseTreeWalker()
+  walker.walk(resultListener.SQLListener(results), tree)
   return results
 
 
 LINE_PREFIX = 'sql_event: '
 SKIP = len(LINE_PREFIX)
 
-def processFile(file):
+
+def processFile(file, withSql=False):
+  """Process a file with log lines.
+
+  Args:
+    file: str, File name.
+    withSql:
+  Returns:
+    list<dict>, A list of dicts with parsed fields.
+  """
   with open(file) as fd:
     messages = []
     for line in fd.readlines():
@@ -55,14 +74,17 @@ def processFile(file):
         if 'message' in x:
           messages.append(x['message'])
     results = processMessages('\n'.join(messages))
-    sqlresults = processSql('\n'.join(r['query'] for r in results))
-    for res, sqlres in itertools.izip(results, sqlresults):
-      res.update(sqlres)
+    if withSql:
+      sqlresults = processSql('\n'.join(r['query'] for r in results))
+      for res, sqlres in itertools.izip(results, sqlresults):
+        res.update(sqlres)
   return results
 
 
 if __name__ == '__main__':
-  results = processFile(sys.argv[1])
+  opts, args = getopt.getopt(sys.argv[1:], '', ['withSql'])
+  withSql = '--withSql' in (opt[0] for opt in opts)
+  results = processFile(args[0], withSql=withSql)
   # for res in results:
   #   print res
   print json.dumps(results)

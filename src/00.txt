@@ -1,0 +1,2 @@
+sql_event: {"message": " 2016-04-04 00:35:44,006|88E1A9A3-1FCD-48B1-AB04-05BBEC671A3E|2990|748540|applogger|CRITICAL|379|(0.560836) /* m=<module1>_fn=<function2>_f=<file1>_l=<10> P=<page2> */ SELECT b, a FROM table2 where a < b;"}
+sql_event: {"message": " 2016-04-04 01:51:58,503|BDD97F67-9C67-4FE7-8887-19E0F087EFB3|1627|379747|xylogger|VERBOSE|923|(0.040752) /* m=<module1>_fn=<function2>_f=<file1>_l=<10> P=<page2> */ SELECT b2, a2 FROM table2 where a2 < b2;"}

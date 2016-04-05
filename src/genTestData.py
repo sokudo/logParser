@@ -21,6 +21,17 @@ TAILS = [
 
 
 def genFile(file):
+  """Generates and writes a file with test log lines.
+
+  Generates a file with a random number of lines in the log line format.
+  The number of generated lines is in NUM_LINES to several NUM_LINES range.
+  Timestamps are generated for the current date and increase
+  by several seconds each.
+  Other data fields are randomized.
+
+  Args:
+    file: str, Output file name.
+  """
   date = datetime.date.today()
   dateStamp = date.isoformat()
 

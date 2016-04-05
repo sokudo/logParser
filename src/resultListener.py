@@ -2,11 +2,15 @@ from gen import logMessageListener
 from gen import SQLiteListener
 
 
-class ResultListener(logMessageListener.logMessageListener):
+class LogMessagesListener(logMessageListener.logMessageListener):
+  """A listener for walking a list of parsed log lines.
 
+  Creates a dict with parsed log fields for each log line
+  and collects them into a list.
+  """
   def __init__(self, resultsOut):
     self.results = resultsOut
-    super(ResultListener, self).__init__()
+    super(LogMessagesListener, self).__init__()
 
   def enterMessage(self, ctx):
     self.result = {}
@@ -49,6 +53,11 @@ class ResultListener(logMessageListener.logMessageListener):
 
 
 class SQLListener(SQLiteListener.SQLiteListener):
+  """SQL listener for walking the parsed SQL tree.
+
+  Creates a dict with table, columns, SQL command kind (sqlOp) and error count
+  for each SQL statement and collects them into a list.
+  """
 
   def __init__(self, resultsOut):
     self.results = resultsOut
@@ -56,6 +65,7 @@ class SQLListener(SQLiteListener.SQLiteListener):
 
   def enterSql_stmt(self, ctx):
     self.result = {}
+    self.result['sqlOp'] = 'OTHER'
 
   def exitSql_stmt(self, ctx):
     if 'columns' in self.result:
@@ -73,19 +83,19 @@ class SQLListener(SQLiteListener.SQLiteListener):
       self.result['columns'] = {ctx.getText()}
 
   def exitSelect_stmt(self, ctx):
-    self.result['sqlOp'] = 'select'
+    self.result['sqlOp'] = 'SELECT'
 
   def exitSelect_core(self, ctx):
-    self.result['sqlOp'] = 'select'
+    self.result['sqlOp'] = 'SELECT'
 
   def exitInsert_stmt(self, ctx):
-    self.result['sqlOp'] = 'insert'
+    self.result['sqlOp'] = 'INSERT'
 
   def exitDelete_stmt(self, ctx):
-    self.result['sqlOp'] = 'delete'
+    self.result['sqlOp'] = 'DELETE'
 
   def exitUpdate_stmt(self, ctx):
-    self.result['sqlOp'] = 'update'
+    self.result['sqlOp'] = 'UPDATE'
 
   def exitError(self, ctx):
-    self.result['error'] = self.result.get('error', 0) + 1
+    self.result['errorCount'] = self.result.get('errorCount', 0) + 1
