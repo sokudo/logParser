@@ -5,6 +5,8 @@ import json
 from antlr4 import *
 from gen import logMessageLexer
 from gen import logMessageParser
+from gen import SQLiteLexer
+from gen import SQLiteParser
 from src import resultListener
 
 
@@ -30,6 +32,21 @@ def processMessages(data):
   return results
 
 
+def processSql(sql):
+  input = InputStream(sql)
+  lexer = SQLiteLexer.SQLiteLexer(input)
+  stream = CommonTokenStream(lexer)
+  parser = SQLiteParser.SQLiteParser(stream)
+  tree = parser.parse()
+
+  # print(tree.toStringTree(recog=parser))
+
+  walker = ParseTreeWalker()
+  results = []
+  walker.walk(resultListener.SQLListener(results), tree)
+  return results
+
+
 LINE_PREFIX = 'sql_event: '
 SKIP = len(LINE_PREFIX)
 
@@ -43,8 +60,13 @@ def processFile(file):
           messages.append(x['message'])
     results = processMessages('\n'.join(messages))
     for res in results:
-      print res
+      sqlreslist = processSql(res['query'])
+      res.update(sqlreslist[0])
+  return results
+
 
 if __name__ == '__main__':
-  processFile(sys.argv[1])
-
+  results = processFile(sys.argv[1])
+  # for res in results:
+  #   print res
+  print json.dumps(results)
